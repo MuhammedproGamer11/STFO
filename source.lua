@@ -1,14 +1,3 @@
---[[
-all credits to dino!!! 
-edited by jengu
-
-
-there is resize thing but i disbaled it scroll to the bottom to see
-ui now auto go s to the middle of the screen instead of where it used to
-fixed sliders on mobile
-fixed drag on mobile
-]]
-
 -- init
 local player = game.Players.LocalPlayer
 local mouse = player:GetMouse()
