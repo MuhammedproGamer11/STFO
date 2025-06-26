@@ -1,4 +1,14 @@
--- venyx ui lib reuploaded by me
+--[[
+all credits to dino!!! 
+edited by jengu
+
+
+there is resize thing but i disbaled it scroll to the bottom to see
+ui now auto go s to the middle of the screen instead of where it used to
+fixed sliders on mobile
+fixed drag on mobile
+]]
+
 -- init
 local player = game.Players.LocalPlayer
 local mouse = player:GetMouse()
@@ -110,8 +120,8 @@ do
 		self.keybinds = {}
 		self.ended = {}
 		
-		input.InputBegan:Connect(function(key,proc)
-			if self.keybinds[key.KeyCode] and not proc then
+		input.InputBegan:Connect(function(key)
+			if self.keybinds[key.KeyCode] then
 				for i, bind in pairs(self.keybinds[key.KeyCode]) do
 					bind()
 				end
@@ -157,19 +167,21 @@ do
 	end
 	
 	function utility:DraggingEnabled(frame, parent)
-	
 		parent = parent or frame
-		
-		-- stolen from wally or kiriot, kek
 		local dragging = false
-		local dragInput, mousePos, framePos
-
+		local dragInput, startPos, objPos
+	
+		local function update(input)
+			local delta = input.Position - startPos
+			parent.Position = UDim2.new(objPos.X.Scale, objPos.X.Offset + delta.X, objPos.Y.Scale, objPos.Y.Offset + delta.Y)
+		end
+	
 		frame.InputBegan:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 				dragging = true
-				mousePos = input.Position
-				framePos = parent.Position
-				
+				startPos = input.Position
+				objPos = parent.Position
+	
 				input.Changed:Connect(function()
 					if input.UserInputState == Enum.UserInputState.End then
 						dragging = false
@@ -177,21 +189,20 @@ do
 				end)
 			end
 		end)
-
+	
 		frame.InputChanged:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseMovement then
+			if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
 				dragInput = input
 			end
 		end)
-
+	
 		input.InputChanged:Connect(function(input)
 			if input == dragInput and dragging then
-				local delta = input.Position - mousePos
-				parent.Position  = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
+				update(input)
 			end
 		end)
-
 	end
+	
 	
 	function utility:DraggingEnded(callback)
 		table.insert(self.ended, callback)
@@ -205,6 +216,23 @@ local library = {} -- main
 local page = {}
 local section = {}
 
+local main
+
+local function UpdateSize(instance)
+    local screen = game:GetService("Workspace").CurrentCamera.ViewportSize
+
+    local width = 511 / 1920 * screen.X
+    local height = 428 / 1080 * screen.Y
+
+    local minWidth, minHeight = 400, 350
+    local maxWidth, maxHeight = 700, 600 
+
+    width = math.clamp(width, minWidth, maxWidth)
+    height = math.clamp(height, minHeight, maxHeight)
+
+    instance.Size = UDim2.new(0, width, 0, height)
+end
+
 do
 	library.__index = library
 	page.__index = page
@@ -216,93 +244,105 @@ do
 		local container = utility:Create("ScreenGui", {
 			Name = title,
 			Parent = game.CoreGui
-		}, {
-			utility:Create("ImageLabel", {
-				Name = "Main",
-				BackgroundTransparency = 1,
-				Position = UDim2.new(0.25, 0, 0.052435593, 0),
-				Size = UDim2.new(0, 511, 0, 428),
-				Image = "rbxassetid://4641149554",
-				ImageColor3 = themes.Background,
-				ScaleType = Enum.ScaleType.Slice,
-				SliceCenter = Rect.new(4, 4, 296, 296)
-			}, {
-				utility:Create("ImageLabel", {
-					Name = "Glow",
-					BackgroundTransparency = 1,
-					Position = UDim2.new(0, -15, 0, -15),
-					Size = UDim2.new(1, 30, 1, 30),
-					ZIndex = 0,
-					Image = "rbxassetid://5028857084",
-					ImageColor3 = themes.Glow,
-					ScaleType = Enum.ScaleType.Slice,
-					SliceCenter = Rect.new(24, 24, 276, 276)
-				}),
-				utility:Create("ImageLabel", {
-					Name = "Pages",
-					BackgroundTransparency = 1,
-					ClipsDescendants = true,
-					Position = UDim2.new(0, 0, 0, 38),
-					Size = UDim2.new(0, 126, 1, -38),
-					ZIndex = 3,
-					Image = "rbxassetid://5012534273",
-					ImageColor3 = themes.DarkContrast,
-					ScaleType = Enum.ScaleType.Slice,
-					SliceCenter = Rect.new(4, 4, 296, 296)
-				}, {
-					utility:Create("ScrollingFrame", {
-						Name = "Pages_Container",
-						Active = true,
-						BackgroundTransparency = 1,
-						Position = UDim2.new(0, 0, 0, 10),
-						Size = UDim2.new(1, 0, 1, -20),
-						CanvasSize = UDim2.new(0, 0, 0, 314),
-						ScrollBarThickness = 0
-					}, {
-						utility:Create("UIListLayout", {
-							SortOrder = Enum.SortOrder.LayoutOrder,
-							Padding = UDim.new(0, 10)
-						})
-					})
-				}),
-				utility:Create("ImageLabel", {
-					Name = "TopBar",
-					BackgroundTransparency = 1,
-					ClipsDescendants = true,
-					Size = UDim2.new(1, 0, 0, 38),
-					ZIndex = 5,
-					Image = "rbxassetid://4595286933",
-					ImageColor3 = themes.Accent,
-					ScaleType = Enum.ScaleType.Slice,
-					SliceCenter = Rect.new(4, 4, 296, 296)
-				}, {
-					utility:Create("TextLabel", { -- title
-						Name = "Title",
-						AnchorPoint = Vector2.new(0, 0.5),
-						BackgroundTransparency = 1,
-						Position = UDim2.new(0, 12, 0, 19),
-						Size = UDim2.new(1, -46, 0, 16),
-						ZIndex = 5,
-						Font = Enum.Font.GothamBold,
-						Text = title,
-						TextColor3 = themes.TextColor,
-						TextSize = 14,
-						TextXAlignment = Enum.TextXAlignment.Left
-					})
-				})
-			})
 		})
-		
+	
+		main = utility:Create("ImageLabel", {
+			Name = "Main",
+			BackgroundTransparency = 1,
+			Size = UDim2.new(0, 511, 0, 428),
+			Image = "rbxassetid://4641149554",
+			ImageColor3 = themes.Background,
+			ScaleType = Enum.ScaleType.Slice,
+			SliceCenter = Rect.new(4, 4, 296, 296),
+			Parent = container
+		})
+	
+		-- Set Position AFTER Size is defined to properly center it
+		main.Position = UDim2.new(0.5, -main.Size.X.Offset / 2, 0.5, -main.Size.Y.Offset / 2)
+	
+		local glow = utility:Create("ImageLabel", {
+			Name = "Glow",
+			BackgroundTransparency = 1,
+			Position = UDim2.new(0, -15, 0, -15),
+			Size = UDim2.new(1, 30, 1, 30),
+			ZIndex = 0,
+			Image = "rbxassetid://5028857084",
+			ImageColor3 = themes.Glow,
+			ScaleType = Enum.ScaleType.Slice,
+			SliceCenter = Rect.new(24, 24, 276, 276),
+			Parent = main
+		})
+	
+		local pages = utility:Create("ImageLabel", {
+			Name = "Pages",
+			BackgroundTransparency = 1,
+			ClipsDescendants = true,
+			Position = UDim2.new(0, 0, 0, 38),
+			Size = UDim2.new(0, 126, 1, -38),
+			ZIndex = 3,
+			Image = "rbxassetid://5012534273",
+			ImageColor3 = themes.DarkContrast,
+			ScaleType = Enum.ScaleType.Slice,
+			SliceCenter = Rect.new(4, 4, 296, 296),
+			Parent = main
+		})
+	
+		local pagesContainer = utility:Create("ScrollingFrame", {
+			Name = "Pages_Container",
+			Active = true,
+			BackgroundTransparency = 1,
+			Position = UDim2.new(0, 0, 0, 10),
+			Size = UDim2.new(1, 0, 1, -20),
+			CanvasSize = UDim2.new(0, 0, 0, 314),
+			ScrollBarThickness = 0,
+			Parent = pages
+		})
+	
+		local listLayout = utility:Create("UIListLayout", {
+			SortOrder = Enum.SortOrder.LayoutOrder,
+			Padding = UDim.new(0, 10),
+			Parent = pagesContainer
+		})
+	
+		local topBar = utility:Create("ImageLabel", {
+			Name = "TopBar",
+			BackgroundTransparency = 1,
+			ClipsDescendants = true,
+			Size = UDim2.new(1, 0, 0, 38),
+			ZIndex = 5,
+			Image = "rbxassetid://4595286933",
+			ImageColor3 = themes.Accent,
+			ScaleType = Enum.ScaleType.Slice,
+			SliceCenter = Rect.new(4, 4, 296, 296),
+			Parent = main
+		})
+	
+		local titleLabel = utility:Create("TextLabel", {
+			Name = "Title",
+			AnchorPoint = Vector2.new(0, 0.5),
+			BackgroundTransparency = 1,
+			Position = UDim2.new(0, 12, 0, 19),
+			Size = UDim2.new(1, -46, 0, 16),
+			ZIndex = 5,
+			Font = Enum.Font.GothamBold,
+			Text = title,
+			TextColor3 = themes.TextColor,
+			TextSize = 14,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			Parent = topBar
+		})
+	
+		-- Initialize Keybinds and enable dragging for the TopBar
 		utility:InitializeKeybind()
-		utility:DraggingEnabled(container.Main.TopBar, container.Main)
-		
+		utility:DraggingEnabled(topBar, main)
+	
 		return setmetatable({
 			container = container,
-			pagesContainer = container.Main.Pages.Pages_Container,
+			pagesContainer = pagesContainer,
 			pages = {}
 		}, library)
-	end
-	
+	end	
+
 	function page.new(library, title, icon)
 		local button = utility:Create("TextButton", {
 			Name = title,
@@ -1644,21 +1684,27 @@ do
 			dragging = false
 		end)
 
-		slider.MouseButton1Down:Connect(function(input)
-			dragging = true
-			
-			while dragging do
+		slider.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+				dragging = true
 				utility:Tween(circle, {ImageTransparency = 0}, 0.1)
-				
-				value = self:updateSlider(slider, nil, nil, min, max, value)
-				callback(value)
-				
-				utility:Wait()
+		
+				local connection
+				connection = input.Changed:Connect(function()
+					if input.UserInputState == Enum.UserInputState.End then
+						dragging = false
+						utility:Tween(circle, {ImageTransparency = 1}, 0.2)
+						connection:Disconnect()
+					end
+				end)
+		
+				while dragging do
+					value = self:updateSlider(slider, nil, nil, min, max, value)
+					callback(value)
+					utility:Wait()
+				end
 			end
-			
-			wait(0.5)
-			utility:Tween(circle, {ImageTransparency = 1}, 0.2)
-		end)
+		end)		
 		
 		textbox.FocusLost:Connect(function()
 			if not tonumber(textbox.Text) then
@@ -1911,13 +1957,16 @@ do
 		end
 		
 		self.container.CanvasSize = UDim2.new(0, 0, 0, size)
-		self.container.ScrollBarImageTransparency = size > self.container.AbsoluteSize.Y
+		
+		pcall(function()
+			self.container.ScrollBarImageTransparency = size > self.container.AbsoluteSize.Y
+		end)
 		
 		if scroll then
 			utility:Tween(self.container, {CanvasPosition = Vector2.new(0, self.lastPosition or 0)}, 0.2)
 		end
 	end
-	
+
 	function section:Resize(smooth)
 	
 		if self.page.library.focusedPage ~= self.page then
@@ -2166,6 +2215,13 @@ do
 			frame.ScrollBarImageTransparency = 1
 		end
 	end
+
+	task.spawn(function()
+		while task.wait(.1) do
+			--UpdateSize(main)
+			-- do this if u want it to resize based on screenzie idk if it alooks well on mobile # jengu
+		end
+	end)
 end
 
 return library
